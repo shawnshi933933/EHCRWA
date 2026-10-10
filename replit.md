@@ -1,10 +1,11 @@
-# [Project name]
+# RWA 股票聚合器
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+按底层股票代码归组并比较不同发行方、不同链上的 RWA 股票代币，展示价格口径差异与明确的核验状态。
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/rwa-market run typecheck` — check the frontend
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -22,23 +23,28 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/rwa-market/src/App.tsx` — single-page asset comparison and local quote calculator
+- `artifacts/rwa-market/src/index.css` — visual theme and responsive layout
+- `lib/api-spec/openapi.yaml` — shared API contract, currently unrelated to the frontend prototype
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The first version is a frontend-only prototype; it does not call APIs, wallets, RPCs, or trading services.
+- Example product data, prices, depth, fees, gas, and slippage are fabricated for interaction previews and must remain labeled as simulated.
+- Group products by underlying stock only for discovery; issuer, chain, legal wrapper, rights, pricing basis, and redemption may differ.
+- Keep unknown contract, dividend/rebase, regional eligibility, and venue details marked as unverified rather than filling in assumptions.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Search TSLA, AAPL, and NVDA examples; compare issuer versions by chain, token price, per-token illustrative underlying exposure, simulated depth, and quote status; change the input asset and amount to recalculate a local-only estimate.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+The interface is written in Chinese, while issuer, token, and network names retain their official names.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+Never present this prototype's mock prices or quote estimates as live data, verified issuer terms, investment guidance, or executable trades.
 
 ## Pointers
 

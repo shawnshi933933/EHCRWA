@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "RWA 股票聚合器"
+description = "按股票聚合不同发行方和链上的 RWA 股票代币，帮助用户比较资产结构、价格口径与示例交易报价。首版为清晰标注的交互式演示，不执行真实交易或提供实时行情。"
+version = "1.0.0"
+id = "artifacts/rwa-market"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19569
+
+[services.development]
+run = "pnpm --filter @workspace/rwa-market run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/rwa-market", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/rwa-market/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19569"
+BASE_PATH = "/"
