@@ -52,7 +52,7 @@ The interface is written in English, while issuer, token, and network names reta
 
 - Core message: **A quote is not liquidity.** Supporting copy: **Price shows the edge. Depth shows the market.**
 - The uploaded EHC DEX concept is the visual reference: near-black/navy surfaces, blue-purple liquidity structures, and restrained gold flow accents. These are proposed UI colors, not precisely extracted brand tokens.
-- Use a readable EHC DEX wordmark until a separate official logo file is supplied. Concept artwork is not a quantitative depth chart.
+- Use the existing blue-purple 3D E emblem, not a newly designed substitute. The current logo and favicon are cropped and background-removed from the user's uploaded brand artwork, not original assets downloaded from X. Concept artwork is not a quantitative depth chart.
 - Explain discovery across issuer wrappers, exposure-aware comparison, and order-size context. Mark cross-chain execution as **Planned**, not available.
 - X profile/posts were not accessible during planning; no messaging, partnerships, or statistics from that account have been verified or incorporated.
 - Simulated model output must disclose its assumptions and units. It is not executable liquidity, a guarantee of fills, or an investment recommendation.

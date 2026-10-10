@@ -3,12 +3,7 @@ import { ArrowDown, Boxes, Gauge, GitBranch, Waypoints } from 'lucide-react';
 export function Wordmark() {
   return (
     <span className="wordmark" data-testid="brand-ehc-dex">
-      <svg viewBox="0 0 32 32" aria-hidden="true" className="wm-mark">
-        <defs><linearGradient id="wmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#5B8CFF" /><stop offset="1" stopColor="#916BFF" /></linearGradient></defs>
-        <rect width="32" height="32" rx="8" fill="url(#wmg)" />
-        <path d="M10 8h13v4H14v3h8v3h-8v3h9v4H10z" fill="#060914" />
-        <path d="M3 27 L29 21" stroke="#DDB779" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
+      <img src={`${import.meta.env.BASE_URL}ehc-logo.png`} alt="" aria-hidden="true" className="wm-mark" width="38" height="38" data-testid="img-ehc-logo" />
       <span className="wm-text">EHC <b>DEX</b></span>
     </span>
   );
