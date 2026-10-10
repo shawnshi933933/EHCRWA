@@ -1,6 +1,6 @@
-# RWA 股票聚合器
+# RWA Stock Aggregator
 
-按底层股票代码归组并比较不同发行方、不同链上的 RWA 股票代币，展示价格口径差异与明确的核验状态。
+Groups tokenized equity products by underlying stock for discovery and compares issuer, network, price basis, and verification status.
 
 ## Run & Operate
 
@@ -40,7 +40,7 @@ Search TSLA, AAPL, and NVDA examples; compare issuer versions by chain, token pr
 
 ## User preferences
 
-The interface is written in Chinese, while issuer, token, and network names retain their official names.
+The interface is written in English, while issuer, token, and network names retain their official names.
 
 ## Gotchas
 
