@@ -1,11 +1,13 @@
-# RWA Stock Aggregator
+# EHC DEX
 
-Groups tokenized equity products by underlying stock for discovery and compares issuer, network, price basis, and verification status.
+EHC DEX groups tokenized equity products by underlying stock for discovery and compares issuer, network, price basis, verification status, and simulated order-size costs.
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
 - `pnpm --filter @workspace/rwa-market run typecheck` — check the frontend
+- `node --test artifacts/rwa-market/tests/market.test.mjs` — check shared simulated fee, output, and exposure calculations
+- `PORT=19569 BASE_PATH=/ pnpm --filter @workspace/rwa-market run build` — standalone frontend build; managed artifact builds inject these service settings
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -24,6 +26,8 @@ Groups tokenized equity products by underlying stock for discovery and compares 
 ## Where things live
 
 - `artifacts/rwa-market/src/App.tsx` — single-page asset comparison and local quote calculator
+- `artifacts/rwa-market/src/components/brand.tsx` — EHC DEX identity, concept illustration, and feature messaging
+- `artifacts/rwa-market/src/data/market.ts` — explicitly simulated asset examples and shared order-size estimate model
 - `artifacts/rwa-market/src/index.css` — visual theme and responsive layout
 - `lib/api-spec/openapi.yaml` — shared API contract, currently unrelated to the frontend prototype
 
@@ -38,9 +42,20 @@ Groups tokenized equity products by underlying stock for discovery and compares 
 
 Search TSLA, AAPL, and NVDA examples; compare issuer versions by chain, token price, per-token illustrative underlying exposure, simulated depth, and quote status; change the input asset and amount to recalculate a local-only estimate.
 
+The brand introduction leads into the market workbench. Quote preview and order-size scenarios share one calculation model. The model assumptions, fixed demo exchange rates, and non-executable nature of the examples are disclosed in the scenario section.
+
 ## User preferences
 
 The interface is written in English, while issuer, token, and network names retain their official names.
+
+## Brand and content
+
+- Core message: **A quote is not liquidity.** Supporting copy: **Price shows the edge. Depth shows the market.**
+- The uploaded EHC DEX concept is the visual reference: near-black/navy surfaces, blue-purple liquidity structures, and restrained gold flow accents. These are proposed UI colors, not precisely extracted brand tokens.
+- Use a readable EHC DEX wordmark until a separate official logo file is supplied. Concept artwork is not a quantitative depth chart.
+- Explain discovery across issuer wrappers, exposure-aware comparison, and order-size context. Mark cross-chain execution as **Planned**, not available.
+- X profile/posts were not accessible during planning; no messaging, partnerships, or statistics from that account have been verified or incorporated.
+- Simulated model output must disclose its assumptions and units. It is not executable liquidity, a guarantee of fills, or an investment recommendation.
 
 ## Gotchas
 
