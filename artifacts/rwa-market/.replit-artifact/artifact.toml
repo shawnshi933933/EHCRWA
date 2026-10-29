@@ -1,7 +1,7 @@
 kind = "web"
 previewPath = "/"
 title = "EHC DEX"
-description = "EHC DEX tokenized equity discovery and liquidity-context prototype. Compare issuer-specific exposure and simulated order-size costs; no live quotes or trade execution."
+description = "Stock-only RWA intelligence with a stock-to-issuer relationship map, source-attributed token data, contracts and issuer research. Market-pair access limitations are explicitly disclosed; no trading."
 version = "1.0.0"
 id = "artifacts/rwa-market"
 router = "path"

@@ -1,232 +1,33 @@
 import { type ReactNode } from 'react';
-import { useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { Layout } from '@/components/shell';
+import Home from '@/pages/home';
+import MarketMap from '@/pages/market-map';
+import Issuers from '@/pages/issuers';
+import IssuerDetail from '@/pages/issuer-detail';
 import NotFound from '@/pages/not-found';
-import { AlertTriangle, LockKeyhole, Search, ShieldAlert, Wallet } from 'lucide-react';
-import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
-import { Features, Hero, Wordmark } from '@/components/brand';
-import { estimate, instruments, money, productsBySymbol, type SymbolKey } from '@/data/market';
 
-const queryClient = new QueryClient();
-const SIZES = [250, 1000, 5000, 25000, 100000];
-
-function Home() {
-  const [query, setQuery] = useState('TSLA');
-  const [symbol, setSymbol] = useState<SymbolKey>('TSLA');
-  const [chainFilter, setChainFilter] = useState('All chains');
-  const [sortBy, setSortBy] = useState('default');
-  const [selectedId, setSelectedId] = useState('ondo-tsla-ethereum');
-  const [amount, setAmount] = useState('1000');
-  const [inputAsset, setInputAsset] = useState('USDC');
-  const [notice, setNotice] = useState('');
-  const [walletNotice, setWalletNotice] = useState('');
-  const [noSearchMatch, setNoSearchMatch] = useState(false);
-  const matchingSymbol = (raw: string): SymbolKey | null => {
-    const normalized = raw.trim().toUpperCase();
-    return (Object.keys(instruments) as SymbolKey[]).find(key => key === normalized || instruments[key].aliases.includes(raw.trim().toLowerCase())) ?? null;
-  };
-  const currentProducts = productsBySymbol[symbol];
-  const visibleProducts = useMemo(() => {
-    const filtered = currentProducts.filter(product => chainFilter === 'All chains' || product.chain === chainFilter);
-    if (sortBy === 'depth') return [...filtered].sort((a, b) => b.depth - a.depth);
-    if (sortBy === 'price') return [...filtered].sort((a, b) => a.price - b.price);
-    return filtered;
-  }, [currentProducts, chainFilter, sortBy]);
-  const selected = currentProducts.find(product => product.id === selectedId) ?? currentProducts[0];
-  const amountNumber = Math.max(0, Number(amount) || 0);
-  const inputRate = inputAsset === 'ETH' ? 2500 : 1;
-  const grossUsd = amountNumber * inputRate;
-  const { slippage, routeFee, gas, bridgeFee, feeUsd, output, underlyingExposure } = estimate(selected, symbol, grossUsd, inputAsset);
-  const scenarioSizes = useMemo(() => {
-    const rows = SIZES.map(size => ({ size, current: false }));
-    if (grossUsd > 0 && !SIZES.includes(grossUsd)) rows.push({ size: grossUsd, current: true });
-    else rows.forEach(r => { if (r.size === grossUsd) r.current = true; });
-    return rows.sort((a, b) => a.size - b.size);
-  }, [grossUsd]);
-  const selectSymbol = (key: SymbolKey) => {
-    setSymbol(key); setQuery(key); setChainFilter('All chains'); setSortBy('default');
-    setSelectedId(productsBySymbol[key][0].id); setNotice(''); setNoSearchMatch(false);
-  };
-  const submitSearch = () => {
-    const found = matchingSymbol(query);
-    if (found) selectSymbol(found);
-    else setNoSearchMatch(true);
-  };
-  const chainOptions = ['All chains', ...Array.from(new Set(currentProducts.map(product => product.chain)))];
-  const compactAmount = (value: number) => value.toLocaleString('en-US', { maximumFractionDigits: 6 });
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <Wordmark />
-        <nav className="top-nav" aria-label="Page sections">
-          <a href="#markets" data-testid="link-nav-markets">Explore markets</a>
-          <a href="#differences" data-testid="link-nav-differences">Asset differences</a>
-        </nav>
-        <div className="top-right">
-          <span className="network-note" data-testid="status-data-mode"><i className="live-dot" /> LOCAL DEMO · OFFLINE</span>
-          <button className="btn" data-testid="button-connect-wallet" onClick={() => setWalletNotice('Wallet connection is unavailable in this prototype. No wallet permissions or on-chain services will be requested.')}>
-            <Wallet aria-hidden="true" /> Connect wallet
-          </button>
-        </div>
-      </header>
-      <main className="page-wrap">
-        <div className="notice-strip" role="note" data-testid="banner-demo-warning">
-          <AlertTriangle className="notice-icon" aria-hidden="true" />
-          <span><strong>Demo data · Not live · Contracts unverified · No trading</strong> Prices, depth, quote sources, gas, bridge fees, and slippage are simulated estimates, not investment advice.</span>
-        </div>
-        {walletNotice && <div className="status-banner" role="status" data-testid="status-wallet-unavailable">{walletNotice}</div>}
-        <Hero />
-        <Features />
-        <section id="markets" className="market-anchor" aria-labelledby="comparison-title">
-          <form className="search-wrap" onSubmit={event => { event.preventDefault(); submitSearch(); }}>
-            <label className="search-label" htmlFor="asset-search">Search stocks</label>
-            <div className="search-row">
-              <div className="search-field">
-                <Search aria-hidden="true" />
-                <input id="asset-search" data-testid="input-stock-search" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); submitSearch(); } }} placeholder="Ticker or company name, e.g. TSLA" autoComplete="off" />
-                <span className="search-shortcut" aria-hidden="true">Enter</span>
-              </div>
-              <div className="quick-symbols" aria-label="Popular stocks">
-                {(Object.keys(instruments) as SymbolKey[]).map(key => <button type="button" key={key} data-testid={`button-quick-search-${key.toLowerCase()}`} aria-pressed={symbol === key} onClick={() => selectSymbol(key)}>{key}</button>)}
-              </div>
-            </div>
-          </form>
-          <div className="section-heading">
-            <div>
-              <h2 id="comparison-title" data-testid="text-asset-heading">{symbol} <span className="dim">· {instruments[symbol].name}</span></h2>
-              <p>{instruments[symbol].sector} / Illustrative reference {money(instruments[symbol].reference)} · Not live · Not investment advice</p>
-            </div>
-            <div className="section-side">
-              <label className="eyebrow" htmlFor="chain-filter">Network</label>
-              <select id="chain-filter" className="select-control" data-testid="select-chain-filter" value={chainFilter} onChange={event => {
-                const nextFilter = event.target.value;
-                setChainFilter(nextFilter);
-                const nextVisible = currentProducts.filter(product => nextFilter === 'All chains' || product.chain === nextFilter);
-                if (nextVisible.length && !nextVisible.some(product => product.id === selectedId)) setSelectedId(nextVisible[0].id);
-              }}>
-                {chainOptions.map(option => <option key={option} value={option}>{option}</option>)}
-              </select>
-              <label className="eyebrow" htmlFor="sort-assets">Sort</label>
-              <select id="sort-assets" className="select-control" data-testid="select-asset-sort" value={sortBy} onChange={event => setSortBy(event.target.value)}>
-                <option value="default">Default order</option><option value="depth">Simulated depth: high → low</option><option value="price">Token price: low → high</option>
-              </select>
-            </div>
-          </div>
-          <div className="workbench">
-            <div className="wb-main">
-              <div className="asset-shell">
-                {noSearchMatch ? <div className="empty-state" role="status" data-testid="state-no-search-results"><Search aria-hidden="true" /><strong>No matching stock found</strong><p>Try TSLA, Tesla, AAPL, Apple, NVDA, or NVIDIA.</p></div> : visibleProducts.length ? <div className="table-scroll" tabIndex={0} aria-label="Issuer comparison table, scrolls horizontally">
-                  <table className="asset-table">
-                    <thead><tr>
-                      <th>Issuer / version</th><th>Network</th><th>Token / address status</th><th>Token price</th><th>Illustrative underlying exposure per token</th><th>Simulated depth</th><th>Quote status</th><th aria-label="Select a quote"></th>
-                    </tr></thead>
-                    <tbody>
-                      {visibleProducts.map(product => <tr key={product.id} className={`asset-row ${selected.id === product.id ? 'selected' : ''}`} data-testid={`row-asset-${product.id}`} onClick={() => { setSelectedId(product.id); setNotice(''); }} tabIndex={0} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); setSelectedId(product.id); } }}>
-                        <td><div className="token-name"><span className={`issuer-glyph ${product.issuer.toLowerCase()}`} aria-hidden="true">{product.badge}</span><span><span className="token-title">{product.issuer}</span><span className="token-sub">{product.ticker} · {symbol}</span></span></div></td>
-                        <td><span className="chain-pill">{product.chain}</span></td>
-                        <td><span className="token-title">{product.token}</span><span className="token-sub pending">Address: unverified</span></td>
-                        <td><span className="price-main">{money(product.price)}</span><span className="price-caption">Simulated token price</span></td>
-                        <td><span className="price-main">{money(instruments[symbol].reference * product.sharesPerToken)}</span><span className="price-caption">{product.basis}</span></td>
-                        <td><span className="depth-val">{money(product.depth)}</span><div className="depth-track"><span style={{ width: `${Math.max(18, Math.min(100, product.depth / 4500))}%` }} /></div></td>
-                        <td><span className="state-pill"><i className="state-dot" />Simulated quote</span><span className="token-sub">{product.quoteAge}</span></td>
-                        <td><button type="button" className="select-row" data-testid={`button-select-quote-${product.id}`} aria-pressed={selected.id === product.id} onClick={event => { event.stopPropagation(); setSelectedId(product.id); setNotice(''); }}>{selected.id === product.id ? 'Selected' : 'Select quote'}</button></td>
-                      </tr>)}
-                    </tbody>
-                  </table>
-                </div> : <div className="empty-state" data-testid="state-empty-chain"><Search aria-hidden="true" /><strong>No demo assets for this network</strong><p>Change the network filter to view other local examples.</p></div>}
-                <div className="table-foot"><span>Examples are for interface demonstration only; contract addresses and listing status are unverified. Different issuers are not interchangeable and rows are not ranked as a best route.</span><span data-testid="text-result-count">{noSearchMatch ? 0 : visibleProducts.length} demo versions</span></div>
-              </div>
-              {!noSearchMatch && <section className="panel scenario" aria-labelledby="scenario-title" data-testid="panel-order-size">
-                <div className="panel-head"><div><h3 id="scenario-title">Order size scenarios</h3><p>{selected.issuer} · {selected.token} · {selected.chain} · input {inputAsset}. Size in USD value, fees in USD, output in {selected.token}.</p></div><span className="demo-tag">ILLUSTRATIVE DEPTH · DEMO ONLY</span></div>
-                <div className="table-scroll" tabIndex={0} aria-label="Order size scenario table, scrolls horizontally">
-                  <table className="scen-table">
-                    <thead><tr><th>Simulated size</th><th>Est. price impact</th><th>Total simulated fees</th><th>Est. output ({selected.token})</th></tr></thead>
-                    <tbody>
-                      {scenarioSizes.map(row => {
-                        const e = estimate(selected, symbol, row.size, inputAsset);
-                        return <tr key={row.size} className={row.current ? 'current' : ''} data-testid={`row-scenario-${row.size}`}>
-                          <td>{money(row.size)}{row.current && <em> · your amount</em>}</td>
-                          <td>{e.slippage.toFixed(2)}%</td><td>{money(e.feeUsd)}</td>
-                          <td>{e.output.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 6 })}</td>
-                        </tr>;
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="scen-note">Demo assumptions: impact (%) = min(2.4, 0.08 + USD size / max(10,000, depth × 38)), using simulated depth {money(selected.depth)}. Route fee {selected.fee.toFixed(2)}%, fixed gas {money(gas)} and bridge cost {money(bridgeFee)}; output deducts fees, then applies the model impact. USDC/USDT = $1; ETH = $2,500 (fixed demo rates, not live). This is not measured executable liquidity or a guaranteed slippage limit. The same formula drives the quote preview; no fees are actually charged.</p>
-              </section>}
-            </div>
-            {!noSearchMatch && <section className="panel wb-quote" aria-labelledby="quote-title">
-              <div className="panel-head"><div><h3 id="quote-title">Simulated quote preview</h3><p>Local example calculations only. No quote service is connected.</p></div><span className="demo-tag">SIMULATED</span></div>
-              <div className="quote-body">
-                <div className="quote-token">
-                  <div className="quote-token-info"><span className={`issuer-glyph ${selected.issuer.toLowerCase()}`}>{selected.badge}</span><span><strong data-testid="text-selected-token">{selected.issuer} · {selected.token}</strong><span>{selected.chain} / Address unverified</span></span></div>
-                  <div className="quote-price" data-testid="text-selected-token-price">{money(selected.price)}<span>Simulated token price</span></div>
-                </div>
-                <label className="form-label" htmlFor="buy-amount"><span>Input asset and amount</span><span>Illustrative estimate</span></label>
-                <div className="input-combo">
-                  <input id="buy-amount" data-testid="input-buy-amount" inputMode="decimal" type="number" min="0" step="any" value={amount} onChange={event => setAmount(event.target.value)} aria-label="Buy amount" />
-                  <select data-testid="select-input-asset" aria-label="Input asset" value={inputAsset} onChange={event => {
-                    const nextAsset = event.target.value;
-                    const currentUsdValue = amountNumber * inputRate;
-                    setInputAsset(nextAsset);
-                    setAmount(String(nextAsset === 'ETH' ? Number((currentUsdValue / 2500).toFixed(6)) : currentUsdValue));
-                  }}><option value="USDC">USDC</option><option value="USDT">USDT</option><option value="ETH">ETH</option></select>
-                </div>
-                <div className="amount-chips" aria-label="Quick amounts">
-                  {[250, 1000, 5000].map(value => <button type="button" key={value} data-testid={`button-amount-${value}`} onClick={() => setAmount(String(value / inputRate))}>{compactAmount(value / inputRate)} {inputAsset}</button>)}
-                </div>
-                <div className="quote-result" data-testid="panel-simulated-output">
-                  <div className="result-top"><span>Estimated output · {selected.token}</span><strong data-testid="text-estimated-output">{output.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 6 })} <em>{selected.token}</em></strong></div>
-                  <div className="result-value" data-testid="text-underlying-equivalent">Illustrative underlying exposure ≈ {money(underlyingExposure)} · Unit reference only</div>
-                </div>
-                <div className="fee-list">
-                  <div className="fee-item"><span>Simulated route fee ({selected.fee.toFixed(2)}%)</span><strong data-testid="text-route-fee">{money(routeFee)}</strong></div>
-                  <div className="fee-item"><span>Simulated network gas</span><strong data-testid="text-gas-estimate">{money(gas)}</strong></div>
-                  <div className="fee-item"><span>Simulated bridge fee</span><strong data-testid="text-bridge-estimate">{money(bridgeFee)}</strong></div>
-                  <div className="fee-item"><span>Total simulated fees</span><strong data-testid="text-total-fees">{money(feeUsd)}</strong></div>
-                  <div className="fee-item"><span>Estimated slippage</span><strong data-testid="text-slippage-estimate">{slippage.toFixed(2)}% · simulated</strong></div>
-                  <div className="fee-item"><span>Estimated input value</span><strong data-testid="text-input-value">{money(grossUsd)}</strong></div>
-                </div>
-                <button type="button" className="btn btn-primary quote-button" data-testid="button-preview-trade" onClick={() => setNotice('Trade execution is unavailable. This is a client-side simulation only; no transaction, contract call, or on-chain action will be submitted.')}>
-                  <LockKeyhole aria-hidden="true" /> Trade execution unavailable
-                </button>
-                <div className="prototype-note">This prototype will not sign, connect a wallet, or broadcast transactions.</div>
-                {notice && <div className="status-banner" role="status" data-testid="status-prototype-notice">{notice}</div>}
-              </div>
-            </section>}
-          </div>
-        </section>
-        <section id="differences" className="panel detail-panel" aria-labelledby="detail-title">
-          <div className="panel-head"><div><h3 id="detail-title">Asset mechanics and risk differences</h3><p data-testid="text-detail-issuer">{selected.issuer} · {selected.token} · {selected.chain}</p></div><span className="demo-tag">UNVERIFIED FIELDS MARKED</span></div>
-          <div className="detail-body">
-            <div className="detail-row"><span className="detail-key">Wrapper / tracking mechanics</span><span className="detail-value" data-testid="text-detail-mechanism">{selected.mechanism}</span></div>
-            <div className="detail-row"><span className="detail-key">Price basis</span><span className="detail-value">Token price and illustrative underlying exposure per token are shown separately; the actual conversion terms are unverified.</span></div>
-            <div className="detail-row"><span className="detail-key">Dividends / rebase</span><span className="detail-value pending" data-testid="text-dividend-status">Terms unverified</span></div>
-            <div className="detail-row"><span className="detail-key">Regional restrictions</span><span className="detail-value pending" data-testid="text-region-status">Availability unverified</span></div>
-            <div className="detail-row"><span className="detail-key">Liquidity venues</span><span className="detail-value pending" data-testid="text-venue-status">Unverified · depth is simulated</span></div>
-            <div className="detail-row"><span className="detail-key">Quote source / time</span><span className="detail-value" data-testid="text-quote-source">{selected.quoteSource}<br />{selected.quoteAge}</span></div>
-            <div className="detail-row"><span className="detail-key">Token contract</span><span className="detail-value pending" data-testid="text-contract-status">Unverified · address not shown</span></div>
-            <div className="risk-note" data-testid="notice-non-fungible"><strong>These are not the same asset.</strong> A shared stock ticker is for discovery only. Issuer versions may differ in legal wrapper, network, rights, pricing, and redemption path; do not treat them as interchangeable 1:1 tokens.</div>
-          </div>
-        </section>
-        <div className="bottom-note" data-testid="text-disclaimer"><ShieldAlert aria-hidden="true" /><span>All prices, depth, sources, gas, bridge fees, and slippage on this page are client-side simulations, not live market data. Issuer information, contracts, dividend/rebase terms, regional availability, and liquidity venues are unverified. Cross-chain execution is planned and not available. Do not use this page to make trading decisions.</span></div>
-      </main>
-    </div>
-  );
-}
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 15 * 60 * 1000, refetchOnWindowFocus: false, retry: 1 } },
+});
 
 function Router() {
   return (
-    <RoutedErrorBoundary>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route component={NotFound} />
-      </Switch>
-    </RoutedErrorBoundary>
+    <Layout>
+      <RoutedErrorBoundary>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/market-map" component={MarketMap} />
+          <Route path="/issuers" component={Issuers} />
+          <Route path="/issuers/:issuerId" component={IssuerDetail} />
+          <Route component={NotFound} />
+        </Switch>
+      </RoutedErrorBoundary>
+    </Layout>
   );
 }
 

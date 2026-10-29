@@ -11,6 +11,61 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /equity-universe:
+    get:
+      operationId: getEquityUniverse
+      summary: Stock-only CMC directory and shared issuer/product matrix
+      responses:
+        "200":
+          description: Current or explicitly stale cached matrix
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquityUniverse"
+        "503":
+          description: Source unavailable; no simulated fallback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SourceError"
+  /equities/{rwaId}:
+    get:
+      operationId: getEquityDetail
+      parameters:
+        - name: rwaId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: Stock fundamentals, issuer products and source access status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquityDetail"
+        "404":
+          description: Not a covered tokenized stock
+        "503":
+          description: Source unavailable
+  /equity-issuers/{issuerId}:
+    get:
+      operationId: getEquityIssuer
+      parameters:
+        - name: issuerId
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[a-f0-9]{24}$" }
+      responses:
+        "200":
+          description: Issuer's stock-only products from the same matrix
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquityIssuerDetail"
+        "404":
+          description: Issuer not in the stock-only directory
+        "503":
+          description: Source unavailable
   /healthz:
     get:
       operationId: healthCheck
@@ -26,6 +81,155 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    SourceError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    EquitySource:
+      type: object
+      required: [provider, url, fetchedAt, expiresAt, state, warnings, catalogStockCount, tokenizedStockCount]
+      properties:
+        provider: { type: string }
+        url: { type: string }
+        fetchedAt: { type: string }
+        expiresAt: { type: string }
+        state: { type: string, enum: [cached, stale] }
+        warnings:
+          type: array
+          items: { type: string }
+        catalogStockCount: { type: integer }
+        tokenizedStockCount: { type: integer }
+    EquityContract:
+      type: object
+      required: [network, address, explorerUrl]
+      properties:
+        network: { type: string }
+        address: { type: string }
+        explorerUrl: { type: [string, "null"] }
+    EquityStock:
+      type: object
+      required: [id, symbol, name, slug, tokenizedMarketCapUsd, tokenizedVolume24hUsd, asOf, productCount, issuerCount]
+      properties:
+        id: { type: integer }
+        symbol: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        tokenizedMarketCapUsd: { type: [number, "null"] }
+        tokenizedVolume24hUsd: { type: [number, "null"] }
+        asOf: { type: [string, "null"] }
+        productCount: { type: integer }
+        issuerCount: { type: integer }
+    EquityProduct:
+      type: object
+      required: [id, stockId, issuerId, name, symbol, priceUsd, marketCapUsd, volume24hUsd, asOf, isWrapped, networks, contracts, sourceUrl, website]
+      properties:
+        id: { type: integer }
+        stockId: { type: integer }
+        issuerId: { type: string }
+        name: { type: string }
+        symbol: { type: string }
+        priceUsd: { type: [number, "null"] }
+        marketCapUsd: { type: [number, "null"] }
+        volume24hUsd: { type: [number, "null"] }
+        asOf: { type: [string, "null"] }
+        isWrapped: { type: boolean }
+        networks:
+          type: array
+          items: { type: string }
+        contracts:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityContract"
+        sourceUrl: { type: string }
+        website: { type: [string, "null"] }
+    EquityIssuer:
+      type: object
+      required: [id, name, website, productCount, stockCount, marketCapUsd, volume24hUsd, missingMarketCapCount]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        website: { type: [string, "null"] }
+        productCount: { type: integer }
+        stockCount: { type: integer }
+        marketCapUsd: { type: [number, "null"] }
+        volume24hUsd: { type: [number, "null"] }
+        missingMarketCapCount: { type: integer }
+    MarketAccess:
+      type: object
+      required: [status, message, checkedAt, sourceUrl]
+      properties:
+        status: { type: string, enum: [restricted, unavailable, available] }
+        message: { type: string }
+        checkedAt: { type: [string, "null"] }
+        sourceUrl: { type: string }
+    EquityUniverse:
+      type: object
+      required: [stocks, products, issuers, source]
+      properties:
+        stocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityStock"
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityProduct"
+        issuers:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityIssuer"
+        source:
+          $ref: "#/components/schemas/EquitySource"
+    EquityProfile:
+      type: object
+      required: [exchange, industry, description, website, investorRelationsUrl, financialsUrl, secUrl, stockPriceUsd, equityMarketCapUsd]
+      properties:
+        exchange: { type: [string, "null"] }
+        industry: { type: [string, "null"] }
+        description: { type: [string, "null"] }
+        website: { type: [string, "null"] }
+        investorRelationsUrl: { type: [string, "null"] }
+        financialsUrl: { type: [string, "null"] }
+        secUrl: { type: [string, "null"] }
+        stockPriceUsd: { type: [number, "null"] }
+        equityMarketCapUsd: { type: [number, "null"] }
+    EquityDetail:
+      type: object
+      required: [stock, profile, products, source, marketAccess, metadataWarning]
+      properties:
+        stock:
+          $ref: "#/components/schemas/EquityStock"
+        profile:
+          $ref: "#/components/schemas/EquityProfile"
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityProduct"
+        source:
+          $ref: "#/components/schemas/EquitySource"
+        marketAccess:
+          $ref: "#/components/schemas/MarketAccess"
+        metadataWarning: { type: [string, "null"] }
+    EquityIssuerDetail:
+      type: object
+      required: [issuer, stocks, products, source, marketAccess, metadataWarning]
+      properties:
+        issuer:
+          $ref: "#/components/schemas/EquityIssuer"
+        stocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityStock"
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityProduct"
+        source:
+          $ref: "#/components/schemas/EquitySource"
+        marketAccess:
+          $ref: "#/components/schemas/MarketAccess"
+        metadataWarning: { type: [string, "null"] }
     HealthStatus:
       type: object
       properties:
