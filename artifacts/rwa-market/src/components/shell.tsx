@@ -37,7 +37,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <main id="main" className="page-wrap">{children}</main>
       <footer className="site-foot">
         <span>EHC DEX presents tokenized-stock reference data for research. It does not offer trading, custody, or investment advice.</span>
-        <span>Market information updates automatically. Labeled demo venues on the Market Map are illustrative only.</span>
+        <span>Labeled demo venues on the Market Map are illustrative only.</span>
       </footer>
     </div>
   );
@@ -46,12 +46,10 @@ export function Layout({ children }: { children: ReactNode }) {
 export function SourceBar({ source, refreshing, updateFailed = false }: { source: EquitySource; refreshing: boolean; updateFailed?: boolean }) {
   const delayed = source.state === 'stale' || updateFailed;
   return (
-    <div className={`source-bar ${delayed ? 'stale' : ''}`} data-testid="panel-source">
+    <div className={`source-bar ${delayed ? 'stale' : ''}`} aria-busy={refreshing} data-testid="panel-source">
       <div className="sb-main">
         <span className="mono" data-testid="text-last-updated">Updated {stamp(source.fetchedAt)}</span>
-        <span className={`sb-state ${delayed ? 'stale' : ''}`} data-testid="status-source-state" role="status">
-          {delayed ? 'Updates delayed' : refreshing ? 'Updating…' : 'Updates automatically'}
-        </span>
+        {delayed && <span className="sb-state stale" data-testid="status-source-state" role="status">Updates delayed</span>}
       </div>
       {delayed && <span role="note">Showing the last available data. Updates will retry automatically.</span>}
     </div>

@@ -617,7 +617,7 @@ svg.flip, .btn svg, .g-more svg { transition: transform .2s; }
 .pager > div { display: flex; gap: 6px; }
 
 /* Board */
-.board { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1fr); gap: clamp(32px, 4vw, 64px); align-items: start; padding: 6px 0; }
+.board { position: relative; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(32px, 4vw, 64px); align-items: start; padding: 6px 0; }
 .connectors { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 0; }
 .connectors path { fill: none; stroke: #2e3a63; stroke-width: 1.5; transition: stroke .25s, opacity .25s; }
 .connectors path.on { stroke: var(--gold); stroke-width: 2; }
@@ -808,3 +808,22 @@ details.sb-warnings { display: block; }
 .gap-fold summary span { font-weight: 400; font-size: 11px; color: var(--dim); }
 .gap-fold[open] summary { margin-bottom: 8px; }
 @media (max-width: 480px) { .dr-nums { grid-template-columns: repeat(3, minmax(0, 1fr)); } .dr-pair { margin-left: 0; } }
+
+/* Market map: overview band above two-column relation board */
+.overview { border: 1px solid #DDB77955; border-radius: 14px; background: linear-gradient(180deg, #121a31, var(--panel-2)); padding: 16px 18px 18px; margin-bottom: 22px; display: grid; gap: 12px; min-width: 0; }
+.ov-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, .9fr) minmax(0, 1.25fr) minmax(0, .85fr); gap: 22px; align-items: start; }
+.ov-grid > * { min-width: 0; }
+.ov-metrics .metric-grid { margin-top: 8px; }
+.ov-links { margin-top: 0; gap: 2px; }
+.ov-links .eyebrow { margin-bottom: 4px; }
+.ov-id .sc-desc { -webkit-line-clamp: 4; margin-top: 10px; }
+.g-rank { font-size: 10px; color: var(--gold); border: 1px solid #DDB77955; border-radius: 5px; padding: 1px 5px; flex: none; }
+.col-count { text-align: right; }
+@media (max-width: 1280px) { .ov-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@media (max-width: 1099px) { .board { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) {
+  .ov-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .col-label { flex-wrap: wrap; }
+  .col-count { margin-left: 0; text-align: left; width: 100%; }
+}
+.g-head .g-name { margin-right: auto; }
