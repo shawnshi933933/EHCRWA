@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { FlaskConical } from 'lucide-react';
 import { buildDemoMarkets, filterDemoMarkets, summarizeDemoMarkets, type DemoFilter, type DemoMarketInput } from '@/data/demo-markets';
 import { tokenPrice, usd } from '@/lib/format';
-import { VenueRecommendations } from '@/components/venue-recommendations';
 
 const FILTERS: { v: DemoFilter; label: string }[] = [{ v: 'all', label: 'All' }, { v: 'CEX', label: 'CEX' }, { v: 'DEX', label: 'DEX' }];
 
@@ -34,8 +33,6 @@ export function DemoMarkets({ product }: { product: DemoMarketInput }) {
         <div><i>Example ±2% depth</i><b className="mono">{usd(sum.depthTotalUsd)}</b></div>
         <div><i>Median spread</i><b className="mono">{sum.medianSpreadBps === null ? 'N/A' : `${sum.medianSpreadBps.toFixed(1)} bps`}</b></div>
       </div>
-
-      <VenueRecommendations rows={set.rows} symbol={product.symbol} />
 
       {rows.length === 0 ? (
         <p className="muted demo-empty" data-testid="text-demo-empty">

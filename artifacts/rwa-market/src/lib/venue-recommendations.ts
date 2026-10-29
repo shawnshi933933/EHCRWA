@@ -34,7 +34,8 @@ function normalize(value: number, values: number[], lower: boolean): number {
 }
 
 /**
- * Compare only venues of the same selected token and venue kind.
+ * Rank the supplied venue pool separately by venue kind. Callers own the scope
+ * and must disclose unadjusted token-price limitations for cross-issuer pools.
  * Overall: 40% indicative buy price + 40% two-sided depth + 20% spread.
  * Min/max normalization within the complete-data peer group; no missing-value imputation.
  */

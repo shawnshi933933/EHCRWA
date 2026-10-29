@@ -11,6 +11,7 @@ import {
   type EquityUniverse,
 } from '@workspace/api-client-react';
 import { DemoMarkets } from '@/components/demo-markets';
+import { VenueRecommendations } from '@/components/venue-recommendations';
 import { MarketGap, MetaWarning, Methodology, Skel, SourceBar, StateBox } from '@/components/shell';
 import { buildMapIssuerGroups, type MapIssuerGroup } from '@/lib/map-issuers';
 import { byNullLast, count, errorStatus, errorText, NA, parseNumericId, shortAddr, stamp, tokenPrice, usd, usePageMeta } from '@/lib/format';
@@ -246,6 +247,7 @@ function MapBoard({ detail, issuerNames, issuerParam, tokenParam, tokenInvalid, 
   return (
     <>
       <StockOverview detail={detail} />
+      <VenueRecommendations symbol={stock.symbol} products={products} issuerNames={issuerNames} />
       {badParam && (
         <StateBox kind="notfound" title="That product is not part of this stock" action={largest && <button type="button" className="btn" onClick={() => onSelect(largest.issuerId, largest.id)} data-testid="button-clear-selection">Show the largest product instead</button>}>
           {issuerMissing ? `Issuer "${issuerParam}" has no product for ${stock.symbol}. ` : ''}{tokenMissing ? `Token ID "${tokenInvalid ? 'invalid' : tokenParam}" is not a ${stock.symbol} product${issuerParam && !issuerMissing ? ' from this issuer' : ''}. ` : ''}Nothing was selected automatically.

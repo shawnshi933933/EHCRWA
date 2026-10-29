@@ -1,91 +1,98 @@
 import { useMemo } from 'react';
-import type { DemoMarketRow } from '@/data/demo-markets';
-import { indicativeAsk, recommendVenues, venueDepth, type VenuePick } from '@/lib/venue-recommendations';
+import { Link } from 'wouter';
+import type { EquityIssuer, EquityProduct } from '@workspace/api-client-react';
+import { buildStockVenueComparison } from '@/lib/stock-venue-comparison';
+import { indicativeAsk, venueDepth, type VenuePick } from '@/lib/venue-recommendations';
 import { tokenPrice, usd } from '@/lib/format';
 
 type Metric = 'price' | 'liquidity' | 'overall';
-const METRICS: { m: Metric; label: string; reason: string }[] = [
-  { m: 'price', label: 'Best Price', reason: 'Lowest indicative buy-side ask among peers' },
-  { m: 'liquidity', label: 'Best Liquidity', reason: 'Highest combined ±2% bid + ask depth' },
-  { m: 'overall', label: 'Best Overall', reason: 'Top weighted peer score (40/40/20)' },
+const METRICS: { m: Metric; label: string; reason: string; none: string }[] = [
+  { m: 'price', label: 'Best Price', reason: 'Lowest indicative token ask', none: 'no venue has a usable demo price' },
+  { m: 'liquidity', label: 'Best Liquidity', reason: 'Highest combined ±2% bid + ask depth', none: 'no venue has usable depth data' },
+  { m: 'overall', label: 'Best Overall', reason: 'Top weighted score (40% ask / 40% depth / 20% spread)', none: 'no venue has complete price and depth data' },
 ];
 
-function VenueLine({ v }: { v: DemoMarketRow }) {
-  return (
-    <span className="vr-venue">
-      <b>{v.venue}</b>
-      {v.network && <span className="net">{v.network}</span>}
-      <span className="mono vr-pair">{v.pair}</span>
-    </span>
-  );
-}
+export function VenueRecommendations({ symbol, products, issuerNames }: { symbol: string; products: readonly EquityProduct[]; issuerNames: Map<string, EquityIssuer> }) {
+  const cmp = useMemo(() => buildStockVenueComparison(products, issuerNames), [products, issuerNames]);
+  const byKey = useMemo(() => new Map(cmp.rows.map(r => [r.key, r])), [cmp.rows]);
+  const kindCount = (k: string) => cmp.rows.filter(r => r.kind === k).length;
+  const issuersCovered = new Set(cmp.rows.map(r => r.issuerId)).size;
 
-function Pick({ metric, label, reason, pick, peers, kind }: { metric: Metric; label: string; reason: string; pick: VenuePick | null; peers: number; kind: string }) {
-  const id = `${kind.toLowerCase()}-${metric}`;
-  if (!pick) {
-    return (
-      <div className="vr-pick na" data-testid={`card-rec-${id}`}>
-        <span className="vr-label">{label} {kind}</span>
-        <span className="vr-none" data-testid={`text-rec-${id}-unavailable`}>
-          Unavailable{metric === 'liquidity' ? ': no usable depth data.' : metric === 'overall' ? ': insufficient complete data, no pick made.' : ': no usable demo price, no pick made.'}
-        </span>
-      </div>
-    );
-  }
-  const v = pick.venue;
-  const ask = indicativeAsk(v), depth = venueDepth(v);
-  const value = metric === 'price' ? tokenPrice(pick.value) : metric === 'liquidity' ? usd(pick.value) : `${pick.value.toFixed(1)}`;
-  return (
-    <div className={`vr-pick ${metric}`} data-testid={`card-rec-${id}`}>
-      <span className="vr-label">{label} {kind}</span>
-      <div className="vr-main">
-        <VenueLine v={v} />
-        <b className="mono vr-value" data-testid={`text-rec-${id}-value`}>{value}{metric === 'overall' && <small>/100</small>}</b>
-      </div>
-      <span className="vr-ev mono">
-        ask {ask === null ? 'N/A' : tokenPrice(ask)} · depth {depth === null ? 'N/A' : usd(depth)} · {v.spreadBps.toFixed(1)} bps
-      </span>
-      <span className="vr-reason">{reason}{peers <= 1 ? ' — only one candidate, no real comparison.' : ` across ${peers} ${kind} candidates.`}</span>
-    </div>
-  );
-}
+  const lines = cmp.recommendations.flatMap(rec => METRICS.map(x => ({ kind: rec.kind, ...x, pick: rec[x.m] as VenuePick | null })));
 
-export function VenueRecommendations({ rows, symbol }: { rows: readonly DemoMarketRow[]; symbol: string }) {
-  const recs = useMemo(() => recommendVenues(rows), [rows]);
   return (
-    <section className="vr" aria-labelledby="vr-title" data-testid="panel-venue-recommendations">
-      <div className="vr-head">
-        <h5 id="vr-title">Venue picks for <span className="mono">{symbol}</span></h5>
+    <section className="svc" aria-labelledby="svc-title" data-testid="panel-venue-recommendations">
+      <div className="svc-head">
+        <div>
+          <div className="col-label"><span className="mono">↔</span><h2 id="svc-title">Venue comparison · all <span className="mono">{symbol}</span> issuers</h2></div>
+          <p className="svc-sub">Every non-wrapped {symbol} product from every covered issuer, not just the Top 5 and independent of the product selected below.</p>
+        </div>
         <span className="demo-pill vr-pill">Demo · Illustrative</span>
       </div>
-      <div className="vr-groups">
-        {recs.map(r => {
-          const peers = rows.filter(x => x.kind === r.kind);
-          const complete = peers.filter(x => indicativeAsk(x) !== null && (venueDepth(x) ?? 0) > 0).length;
-          return (
-            <div key={r.kind} className="vr-group" data-testid={`group-rec-${r.kind.toLowerCase()}`}>
-              <div className="vr-ghead">
-                <span className={`demo-kind ${r.kind.toLowerCase()}`}>{r.kind}</span>
-                <span className="vr-count">{peers.length} venue{peers.length === 1 ? '' : 's'} · {complete} with complete data</span>
-              </div>
-              {peers.length === 0 ? (
-                <p className="vr-none vr-nocov" data-testid={`text-rec-${r.kind.toLowerCase()}-nocoverage`}>
-                  No {r.kind} coverage: this product has no contract network for a demo pool, so no {r.kind} picks are made.
-                </p>
-              ) : (
-                METRICS.map(x => <Pick key={x.m} metric={x.m} label={x.label} reason={x.reason} pick={r[x.m]} peers={x.m === 'overall' ? complete : x.m === 'price' ? peers.filter(p => indicativeAsk(p) !== null).length : peers.filter(p => (venueDepth(p) ?? 0) > 0).length} kind={r.kind} />)
-              )}
-            </div>
-          );
-        })}
+      <div className="svc-cov mono" data-testid="text-comparison-coverage">
+        <span><b>{cmp.issuerCount}</b> issuers</span>
+        <span><b>{cmp.productCount}</b> products</span>
+        <span><b>{issuersCovered}</b> issuers with demo venues</span>
+        <span><b>{kindCount('CEX')}</b> CEX · <b>{kindCount('DEX')}</b> DEX venues</span>
+        {cmp.excludedWrappedCount > 0 && <span>{cmp.excludedWrappedCount} wrapped excluded</span>}
+      </div>
+      <p className="svc-warn" role="note" data-testid="text-comparison-limitation">
+        <b>Raw token quotes, not share-equivalent.</b> Prices are indicative per-TOKEN asks, unadjusted across issuer wrappers. Shares-per-token ratios are not verified, so tokens from different issuers are not interchangeable and a lower ask is not cheaper exposure. Fees, gas, slippage and eligibility are not included. Not best execution.
+      </p>
+      <div className="svc-scroll" tabIndex={0} role="region" aria-label="Venue comparison table, scrolls horizontally">
+        <table className="svc-table">
+          <caption className="sr-only">Demo venue recommendations across all issuers of {symbol}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Pick</th><th scope="col">Issuer</th><th scope="col">Token</th><th scope="col">Venue / pair</th>
+              <th scope="col" className="num">Indicative token ask</th><th scope="col" className="num">±2% depth</th><th scope="col" className="num">Spread</th><th scope="col" className="num">Score</th><th scope="col">Rationale</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.map(l => {
+              const id = `${l.kind.toLowerCase()}-${l.m}`;
+              const v = l.pick ? byKey.get(l.pick.venue.key) : undefined;
+              const label = <th scope="row"><span className={`demo-kind ${l.kind.toLowerCase()}`}>{l.kind}</span> <span className={`svc-metric ${l.m}`}>{l.label}</span></th>;
+              if (!l.pick || !v) {
+                const reason = kindCount(l.kind) === 0 ? `No ${l.kind} demo coverage for any ${symbol} product` : l.none;
+                return (
+                  <tr key={id} className="na" data-testid={`row-rec-${id}`}>
+                    {label}
+                    <td colSpan={8} className="svc-none" data-testid={`text-rec-${id}-unavailable`}>Unavailable: {reason}. No pick made.</td>
+                  </tr>
+                );
+              }
+              const ask = indicativeAsk(v), depth = venueDepth(v);
+              const peers = cmp.rows.filter(r => r.kind === l.kind && (
+                l.m === 'price' ? indicativeAsk(r) !== null :
+                l.m === 'liquidity' ? (venueDepth(r) ?? 0) > 0 :
+                indicativeAsk(r) !== null && (venueDepth(r) ?? 0) > 0
+              )).length;
+              return (
+                <tr key={id} data-testid={`row-rec-${id}`}>
+                  {label}
+                  <td><Link href={`/issuers/${v.issuerId}`} className="text-link" data-testid={`link-rec-issuer-${id}`}>{v.issuerName}</Link></td>
+                  <td className="mono" data-testid={`text-rec-${id}-token`}>{v.productSymbol}</td>
+                  <td><b>{v.venue}</b>{v.network && <span className="net">{v.network}</span>}<div className="mono svc-dim">{v.pair}</div></td>
+                  <td className={`num mono ${l.m === 'price' ? 'hl' : ''}`}>{ask === null ? 'N/A' : tokenPrice(ask)}</td>
+                  <td className={`num mono ${l.m === 'liquidity' ? 'hl' : ''}`}>{depth === null ? 'N/A' : usd(depth)}</td>
+                  <td className="num mono">{v.spreadBps.toFixed(1)} bps</td>
+                  <td className={`num mono ${l.m === 'overall' ? 'hl' : ''}`} data-testid={`text-rec-${id}-value`}>{l.m === 'overall' ? `${l.pick.value.toFixed(1)}/100` : '—'}</td>
+                  <td className="svc-why">{l.reason} across {peers} {l.kind} venue{peers === 1 ? '' : 's'}{peers <= 1 ? ' (single candidate, no real comparison)' : ''}.</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
       <details className="vr-method" data-testid="details-rec-methodology">
         <summary>How picks are ranked</summary>
         <ul>
-          <li><b>Price:</b> indicative ask = demo mid × (1 + spread in bps / 20,000). Not executable; excludes fees, gas and slippage.</li>
+          <li><b>Scope:</b> all non-wrapped products of this stock across all issuers; no Top 5 cut, no dependence on the selected product or list filter.</li>
+          <li><b>Price:</b> indicative token ask = demo mid × (1 + spread bps / 20,000). Raw per-token quote, not adjusted for issuer share ratios; not comparable as share-equivalent price.</li>
           <li><b>Liquidity:</b> sum of simulated bid −2% and ask +2% depth.</li>
-          <li><b>Overall:</b> 0–100 score, 40% lower ask, 40% higher depth, 20% lower spread, min/max normalized separately within CEX and DEX complete-data peers. A lone peer scores 100. Ties break by stable venue key.</li>
-          <li>Picks use all venues for this product regardless of the list filter. Fictional data; no live quotes or execution guarantee.</li>
+          <li><b>Overall:</b> 0–100, 40% lower ask, 40% higher depth, 20% lower spread, min/max normalized within CEX and DEX complete-data peers. A lone peer scores 100 without a real comparison. Ties break by venue key.</li>
+          <li>Excludes fees, gas, slippage and eligibility. Fictional demo data; no live quotes, execution or trading.</li>
         </ul>
       </details>
     </section>

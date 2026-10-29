@@ -854,3 +854,26 @@ details.sb-warnings { display: block; }
 .vr-method summary { cursor: pointer; font-size: 10.5px; color: var(--dim); }
 .vr-method ul { margin: 6px 0 0; padding-left: 16px; display: grid; gap: 3px; font-size: 10.5px; line-height: 1.5; color: var(--dim); }
 .vr-method b { color: #dfe5f2; }
+
+/* stock-wide venue comparison */
+.svc { display: grid; gap: 10px; border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 14px; background: var(--panel); min-width: 0; margin: 14px 0; }
+.svc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.svc-sub { margin: 4px 0 0; font-size: 12px; color: var(--dim); }
+.svc-cov { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11px; color: var(--dim); }
+.svc-cov b { color: #dfe5f2; }
+.svc-warn { margin: 0; font-size: 11.5px; line-height: 1.5; color: #c4cde0; padding: 8px 10px; border-left: 2px solid var(--gold); background: var(--panel-2); border-radius: 6px; }
+.svc-scroll { overflow-x: auto; border: 1px solid hsl(var(--border)); border-radius: 9px; }
+.svc-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 12px; }
+.svc-table th, .svc-table td { padding: 8px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid hsl(var(--border)); }
+.svc-table thead th { font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); background: var(--panel-2); position: sticky; top: 0; }
+.svc-table tbody th { white-space: nowrap; font-weight: 600; }
+.svc-table tr:last-child > * { border-bottom: 0; }
+.svc-table .num { text-align: right; white-space: nowrap; }
+.svc-table .hl { color: var(--gold); font-weight: 700; }
+.svc-table .net { margin-left: 6px; }
+.svc-metric { font-size: 11px; }
+.svc-metric.price { color: var(--blue); } .svc-metric.liquidity { color: var(--gold); } .svc-metric.overall { color: var(--violet); }
+.svc-dim { font-size: 10.5px; color: var(--dim); }
+.svc-why { font-size: 11px; color: var(--dim); max-width: 260px; }
+.svc-none { font-style: italic; color: var(--dim); }
+.svc-table tr.na th { opacity: .7; }
