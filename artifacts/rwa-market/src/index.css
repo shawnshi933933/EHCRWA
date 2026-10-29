@@ -884,3 +884,6 @@ details.sb-warnings { display: block; }
 .svc-table .svc-best-group + .svc-best-group { border-top: 7px solid var(--panel); }
 .svc-table .svc-best-group tr:first-child > * { border-bottom: 1px solid hsl(var(--border)); }
 .svc-table .svc-best-group .svc-best-heading { border-bottom: 0; }
+.demo-sum b small { font-size: 9.5px; color: var(--dim); font-weight: 500; }
+.svc-table thead th small { text-transform: none; letter-spacing: 0; font-weight: 500; opacity: .8; }
+.svc-table .svc-unit { font-size: 9.5px; color: var(--dim); font-weight: 500; font-family: inherit; }

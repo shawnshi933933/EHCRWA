@@ -38,8 +38,10 @@ test('missing contract/network data never creates a fictitious on-chain pool', (
   const s = summarizeDemoMarkets([]);
   assert.equal(s.venueCount, 0);
   assert.equal(s.volume24hUsd, 0);
-  assert.equal(s.depthTotalUsd, 0);
-  assert.equal(s.medianSpreadBps, null);
+  assert.equal(s.cexBidDepthUsd, null);
+  assert.equal(s.cexAskDepthUsd, null);
+  assert.equal(s.dexPoolLiquidityUsd, null);
+  assert.equal(s.medianCexLiquidityScore, null);
 });
 
 test('missing, zero and invalid token prices remain N/A in the demo', () => {
@@ -62,23 +64,50 @@ test('CEX and DEX filters are disjoint, complete, and preserve original rows', (
   assert.deepEqual(rows, before);
 });
 
-test('summary totals use only visible demo rows with volume separate from two-sided depth', () => {
+test('DEX summary uses pool funds only, without CEX depth or score', () => {
   const rows = filterDemoMarkets(buildDemoMarkets(product).rows, 'DEX');
   const s = summarizeDemoMarkets(rows);
   assert.equal(s.cexCount, 0);
   assert.equal(s.dexCount, rows.length);
   assert.equal(s.volume24hUsd, rows.reduce((n, r) => n + r.volume24hUsd, 0));
-  assert.equal(s.depthTotalUsd, rows.reduce((n, r) => n + r.depthBidUsd + r.depthAskUsd, 0));
-  assert.notEqual(s.volume24hUsd, s.depthTotalUsd);
-  assert.ok(s.medianSpreadBps > 0);
+  assert.equal(s.dexPoolLiquidityUsd, rows.reduce((n, r) => n + r.poolLiquidityUsd, 0));
+  assert.equal(s.cexBidDepthUsd, null);
+  assert.equal(s.cexAskDepthUsd, null);
+  assert.equal(s.medianCexLiquidityScore, null);
 });
 
 test('rows have positive finite illustrative metrics and are sorted by volume', () => {
   const rows = buildDemoMarkets(product).rows;
   for (let i = 0; i < rows.length; i++) {
-    for (const key of ['priceUsd', 'volume24hUsd', 'spreadBps', 'depthBidUsd', 'depthAskUsd']) {
+    for (const key of ['priceUsd', 'volume24hUsd']) {
       assert.ok(Number.isFinite(rows[i][key]) && rows[i][key] > 0, key);
+    }
+    const r = rows[i];
+    assert.equal('spreadBps' in r, false);
+    if (r.kind === 'CEX') {
+      assert.ok(r.depthBidUsd > 0 && r.depthAskUsd > 0);
+      const d = Math.min(r.depthBidUsd, r.depthAskUsd);
+      assert.equal(r.liquidityScore, Math.round(1000 * d / (d + 100000)));
+      assert.ok(r.liquidityScore > 0 && r.liquidityScore <= 1000);
+      assert.equal(r.poolLiquidityUsd, null);
+    } else {
+      assert.ok(r.poolLiquidityUsd > 0);
+      assert.equal(r.depthBidUsd, null);
+      assert.equal(r.depthAskUsd, null);
+      assert.equal(r.liquidityScore, null);
     }
     if (i) assert.ok(rows[i - 1].volume24hUsd >= rows[i].volume24hUsd);
   }
+});
+
+test('mixed summary never sums pool liquidity with order-book depth', () => {
+  const rows = buildDemoMarkets(product).rows;
+  const s = summarizeDemoMarkets(rows);
+  const cex = rows.filter(r => r.kind === 'CEX');
+  const dex = rows.filter(r => r.kind === 'DEX');
+  assert.equal(s.cexAskDepthUsd, cex.reduce((n, r) => n + r.depthAskUsd, 0));
+  assert.equal(s.cexBidDepthUsd, cex.reduce((n, r) => n + r.depthBidUsd, 0));
+  assert.equal(s.dexPoolLiquidityUsd, dex.reduce((n, r) => n + r.poolLiquidityUsd, 0));
+  assert.ok(s.medianCexLiquidityScore > 0 && s.medianCexLiquidityScore <= 1000);
+  assert.equal('depthTotalUsd' in s, false);
 });

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { buildStockVenueComparison } from '../src/lib/stock-venue-comparison.ts';
-import { indicativeAsk } from '../src/lib/venue-recommendations.ts';
+import { referencePrice } from '../src/lib/venue-recommendations.ts';
 
 const p = (id, patch = {}) => ({
   id, issuerId: `issuer-${id}`, symbol: `TOKEN${id}`, priceUsd: 100 + id,
@@ -22,7 +22,7 @@ test('ranks the global venue pool, and winners retain issuer and token identity'
   const { rows, recommendations } = buildStockVenueComparison(products, names);
   for (const group of recommendations) {
     const peers = rows.filter(row => row.kind === group.kind);
-    assert.equal(group.price.value, Math.min(...peers.map(indicativeAsk)));
+    assert.equal(group.price.value, Math.min(...peers.map(referencePrice)));
     assert.equal(group.price.venue.productId, 2);
     assert.equal(group.price.venue.productSymbol, 'TOKEN2');
     assert.ok(rows.includes(group.overall.venue));

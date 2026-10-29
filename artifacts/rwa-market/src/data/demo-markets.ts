@@ -21,9 +21,10 @@ export type DemoMarketRow = {
   network: string | null;
   priceUsd: number | null;
   volume24hUsd: number;
-  spreadBps: number;
-  depthBidUsd: number;
-  depthAskUsd: number;
+  depthBidUsd: number | null;
+  depthAskUsd: number | null;
+  liquidityScore: number | null;
+  poolLiquidityUsd: number | null;
 };
 
 export type DemoMarketSummary = {
@@ -31,8 +32,10 @@ export type DemoMarketSummary = {
   cexCount: number;
   dexCount: number;
   volume24hUsd: number;
-  depthTotalUsd: number;
-  medianSpreadBps: number | null;
+  cexBidDepthUsd: number | null;
+  cexAskDepthUsd: number | null;
+  medianCexLiquidityScore: number | null;
+  dexPoolLiquidityUsd: number | null;
 };
 
 export type DemoMarketSet = {
@@ -69,12 +72,15 @@ export function buildDemoMarkets(p: DemoMarketInput): DemoMarketSet {
   const rows: DemoMarketRow[] = [];
 
   const mk = (kind: DemoVenueKind, i: number, network: string | null, quote: string) => {
-    const spreadBps = kind === 'CEX' ? round(4 + r() * 22, 0.1) : round(12 + r() * 60, 0.1);
     const scale = kind === 'CEX' ? 180_000 + r() * 2_400_000 : 25_000 + r() * 620_000;
     const volume24hUsd = round(scale, 10);
     const depthFactor = kind === 'CEX' ? 0.04 + r() * 0.09 : 0.08 + r() * 0.2;
     const depthBidUsd = round(volume24hUsd * depthFactor, 10);
     const depthAskUsd = round(depthBidUsd * (0.78 + r() * 0.44), 10);
+    const balancedDepth = Math.min(depthBidUsd, depthAskUsd);
+    // EHC demo-only score, deliberately not CMC's proprietary methodology.
+    const liquidityScore = Math.round(1000 * balancedDepth / (balancedDepth + 100_000));
+    const poolLiquidityUsd = round(80_000 + r() * 2_500_000, 10);
     const drift = (r() - 0.5) * 0.006;
     rows.push({
       key: `${kind}-${i}-${network ?? 'na'}`,
@@ -83,7 +89,11 @@ export function buildDemoMarkets(p: DemoMarketInput): DemoMarketSet {
       pair: `${sym}/${quote}`,
       network,
       priceUsd: base === null ? null : base * (1 + drift),
-      volume24hUsd, spreadBps, depthBidUsd, depthAskUsd,
+      volume24hUsd,
+      depthBidUsd: kind === 'CEX' ? depthBidUsd : null,
+      depthAskUsd: kind === 'CEX' ? depthAskUsd : null,
+      liquidityScore: kind === 'CEX' ? liquidityScore : null,
+      poolLiquidityUsd: kind === 'DEX' ? poolLiquidityUsd : null,
     });
   };
 
@@ -98,14 +108,22 @@ export function filterDemoMarkets(rows: readonly DemoMarketRow[], f: DemoFilter)
 }
 
 export function summarizeDemoMarkets(rows: readonly DemoMarketRow[]): DemoMarketSummary {
-  const sp = rows.map(x => x.spreadBps).sort((a, b) => a - b);
-  const mid = sp.length ? (sp.length % 2 ? sp[(sp.length - 1) / 2] : (sp[sp.length / 2 - 1] + sp[sp.length / 2]) / 2) : null;
+  const cex = rows.filter(x => x.kind === 'CEX');
+  const dex = rows.filter(x => x.kind === 'DEX');
+  const scores = cex.flatMap(x => x.liquidityScore === null ? [] : [x.liquidityScore]).sort((a, b) => a - b);
+  const mid = scores.length ? (scores.length % 2 ? scores[(scores.length - 1) / 2] : (scores[scores.length / 2 - 1] + scores[scores.length / 2]) / 2) : null;
+  const sumKnown = (values: (number | null)[]) => {
+    const known = values.filter((x): x is number => x !== null && Number.isFinite(x) && x >= 0);
+    return known.length ? known.reduce((a, x) => a + x, 0) : null;
+  };
   return {
     venueCount: rows.length,
     cexCount: rows.filter(x => x.kind === 'CEX').length,
     dexCount: rows.filter(x => x.kind === 'DEX').length,
     volume24hUsd: rows.reduce((a, x) => a + x.volume24hUsd, 0),
-    depthTotalUsd: rows.reduce((a, x) => a + x.depthBidUsd + x.depthAskUsd, 0),
-    medianSpreadBps: mid,
+    cexBidDepthUsd: sumKnown(cex.map(x => x.depthBidUsd)),
+    cexAskDepthUsd: sumKnown(cex.map(x => x.depthAskUsd)),
+    medianCexLiquidityScore: mid,
+    dexPoolLiquidityUsd: sumKnown(dex.map(x => x.poolLiquidityUsd)),
   };
 }
