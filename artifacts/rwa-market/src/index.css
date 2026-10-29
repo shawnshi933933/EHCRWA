@@ -827,3 +827,30 @@ details.sb-warnings { display: block; }
   .col-count { margin-left: 0; text-align: left; width: 100%; }
 }
 .g-head .g-name { margin-right: auto; }
+
+/* Venue recommendations (demo, illustrative) */
+.vr { display: grid; gap: 8px; border: 1px solid hsl(var(--border)); border-radius: 9px; padding: 10px; background: var(--panel-2); min-width: 0; }
+.vr-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vr-head h5 { margin: 0; font-size: 12px; letter-spacing: .02em; }
+.vr-pill { position: static; }
+.vr-groups { display: grid; gap: 8px; }
+.vr-group { display: grid; gap: 5px; min-width: 0; }
+.vr-ghead { display: flex; align-items: center; gap: 8px; }
+.vr-count { font-size: 10px; color: var(--dim); }
+.vr-pick { display: grid; gap: 3px; padding: 7px 9px; border-radius: 7px; border: 1px solid hsl(var(--border)); border-left: 2px solid var(--blue); background: var(--panel); min-width: 0; }
+.vr-pick.liquidity { border-left-color: var(--gold); }
+.vr-pick.overall { border-left-color: var(--violet); }
+.vr-pick.na { border-left-color: hsl(var(--border)); border-style: dashed; }
+.vr-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+.vr-main { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.vr-venue { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 12px; min-width: 0; }
+.vr-pair { font-size: 10.5px; color: var(--dim); }
+.vr-value { font-size: 13px; }
+.vr-value small { font-size: 10px; color: var(--dim); margin-left: 1px; }
+.vr-ev { font-size: 10px; color: var(--dim); }
+.vr-reason { font-size: 10.5px; color: #c4cde0; line-height: 1.4; }
+.vr-none { font-size: 11px; color: var(--dim); font-style: italic; margin: 0; }
+.vr-nocov { padding: 7px 9px; border: 1px dashed hsl(var(--border)); border-radius: 7px; }
+.vr-method summary { cursor: pointer; font-size: 10.5px; color: var(--dim); }
+.vr-method ul { margin: 6px 0 0; padding-left: 16px; display: grid; gap: 3px; font-size: 10.5px; line-height: 1.5; color: var(--dim); }
+.vr-method b { color: #dfe5f2; }
