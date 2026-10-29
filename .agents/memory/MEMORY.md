@@ -1,3 +1,4 @@
 - [RWA 资产归组与比较](rwa-asset-comparison.md) — 按股票代码归组只方便发现，不能暗示不同发行方代币可互换。
 - [EHC DEX 品牌概念](ehc-brand-concept.md) — 用户已有品牌概念以深色蓝紫市场深度视觉和 “A quote is not liquidity” 为参考。
 - [X 访问证据边界](x-access-evidence.md) — 接口或截图失败不代表公开主页不可读取；部分帖子不等于完整研究。
+- [第一阶段信息平台范围](phase-one-information-scope.md) — 仅股票 RWA 信息展示；股票三栏关系图与发行方专页共用数据，保留项目介绍。
