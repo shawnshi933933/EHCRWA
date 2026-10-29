@@ -877,3 +877,10 @@ details.sb-warnings { display: block; }
 .svc-why { font-size: 11px; color: var(--dim); max-width: 260px; }
 .svc-none { font-style: italic; color: var(--dim); }
 .svc-table tr.na th { opacity: .7; }
+.svc-table .svc-best-heading { vertical-align: middle; min-width: 145px; background: var(--panel-2); }
+.svc-best-tag { display: inline-block; padding: 9px 12px; border: 1px solid #5b8cff55; border-radius: 8px; color: var(--blue); background: #5b8cff12; font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+.svc-best-tag.liquidity { color: var(--gold); border-color: #ddb77955; background: #ddb77912; }
+.svc-best-tag.overall { color: var(--violet); border-color: #916bff55; background: #916bff12; }
+.svc-table .svc-best-group + .svc-best-group { border-top: 7px solid var(--panel); }
+.svc-table .svc-best-group tr:first-child > * { border-bottom: 1px solid hsl(var(--border)); }
+.svc-table .svc-best-group .svc-best-heading { border-bottom: 0; }

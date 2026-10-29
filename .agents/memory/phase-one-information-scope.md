@@ -41,6 +41,8 @@ description: 客户看过初稿后的范围调整：仅股票 RWA 信息展示�
 
 用户要求 Market Map 分别呈现 Best Price、Best Liquidity、Best Overall 的 CEX 和 DEX 推荐，并明确纠正：推荐必须作为独立综合表格，拉通当前股票的所有发行方，而非局限于选中发行方。
 
+展示层级以 Best 类别为主：三大行分别是 Best Price、Best Liquidity、Best Overall，每大行内部再分 CEX 和 DEX。
+
 **Why:** 用户希望综合价格与流动性因素，让信息展示提供可理解的比较结论。
 
 **How to apply:** 推荐表独立于选中产品详情，使用当前股票所有非 Wrapped 发行产品，不受发行方 TOP 5 展示限制，CEX 与 DEX 分开排名。每条推荐必须带发行方与 Token 身份，不将不同发行方代币视为可互换。当前市场数据为 Demo，推荐也必须明确标为演示；披露比较口径、综合权重及未经份额归一化的价格局限，不暗示真实可成交或新增交易执行。

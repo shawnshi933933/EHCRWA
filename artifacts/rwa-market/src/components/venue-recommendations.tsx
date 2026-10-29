@@ -18,8 +18,6 @@ export function VenueRecommendations({ symbol, products, issuerNames }: { symbol
   const kindCount = (k: string) => cmp.rows.filter(r => r.kind === k).length;
   const issuersCovered = new Set(cmp.rows.map(r => r.issuerId)).size;
 
-  const lines = cmp.recommendations.flatMap(rec => METRICS.map(x => ({ kind: rec.kind, ...x, pick: rec[x.m] as VenuePick | null })));
-
   return (
     <section className="svc" aria-labelledby="svc-title" data-testid="panel-venue-recommendations">
       <div className="svc-head">
@@ -44,15 +42,20 @@ export function VenueRecommendations({ symbol, products, issuerNames }: { symbol
           <caption className="sr-only">Demo venue recommendations across all issuers of {symbol}</caption>
           <thead>
             <tr>
-              <th scope="col">Pick</th><th scope="col">Issuer</th><th scope="col">Token</th><th scope="col">Venue / pair</th>
+              <th scope="col">Best</th><th scope="col">Market</th><th scope="col">Issuer</th><th scope="col">Token</th><th scope="col">Venue / pair</th>
               <th scope="col" className="num">Indicative token ask</th><th scope="col" className="num">±2% depth</th><th scope="col" className="num">Spread</th><th scope="col" className="num">Score</th><th scope="col">Rationale</th>
             </tr>
           </thead>
-          <tbody>
-            {lines.map(l => {
+          {METRICS.map(metric => (
+          <tbody key={metric.m} className={`svc-best-group ${metric.m}`} data-testid={`group-best-${metric.m}`}>
+            {cmp.recommendations.map((rec, index) => {
+              const l = { ...metric, kind: rec.kind, pick: rec[metric.m] as VenuePick | null };
               const id = `${l.kind.toLowerCase()}-${l.m}`;
               const v = l.pick ? byKey.get(l.pick.venue.key) : undefined;
-              const label = <th scope="row"><span className={`demo-kind ${l.kind.toLowerCase()}`}>{l.kind}</span> <span className={`svc-metric ${l.m}`}>{l.label}</span></th>;
+              const label = <>
+                {index === 0 && <th scope="rowgroup" rowSpan={2} className="svc-best-heading"><span className={`svc-best-tag ${l.m}`}>{l.label}</span></th>}
+                <th scope="row"><span className={`demo-kind ${l.kind.toLowerCase()}`}>{l.kind}</span></th>
+              </>;
               if (!l.pick || !v) {
                 const reason = kindCount(l.kind) === 0 ? `No ${l.kind} demo coverage for any ${symbol} product` : l.none;
                 return (
@@ -83,6 +86,7 @@ export function VenueRecommendations({ symbol, products, issuerNames }: { symbol
               );
             })}
           </tbody>
+          ))}
         </table>
       </div>
       <details className="vr-method" data-testid="details-rec-methodology">
