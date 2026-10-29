@@ -44,10 +44,11 @@ The cache table is part of the Drizzle schema, applied to development by the con
 
 ## Architecture decisions
 
-- The obsolete local simulated data and fee estimator have been removed. Runtime data is fetched by the API server, never by the browser using a secret.
+- The obsolete simulated trading/fee estimator has been removed. Real research data is fetched by the API server, never by the browser using a secret. The user has separately approved clearly labeled, client-side CEX/DEX demo data for visual previews, not as a backend fallback.
 - The stock directory walks all CMC map pages and checks `asset_type === "stock"`; only entries CMC flags as having tokens are loaded into the research universe. The directory is source coverage, not global market coverage.
 - Identity is `rwa_id` → `crypto_id` → `issuer_id`, with contracts/networks subordinate to products. Ticker strings are not identifiers.
-- Both research views project the same server-cached matrix. Quote cache is 15 minutes, catalog/company/contract metadata 24 hours. No automatic client polling; focus refetch is disabled.
+- Both research views project the same server-cached matrix. Quote cache is 15 minutes, catalog/company/contract metadata 24 hours. The client automatically checks just after snapshot expiry (bounded to 1–15 minutes), pauses interval polling in hidden tabs, and refreshes on return/reconnection. Errors retain existing data and retry automatically. There is no healthy-state manual refresh button.
+- Customer-facing UI uses neutral market wording, a simple updated timestamp and automatic/delayed update status, not provider/API/cache/expiry diagnostics. Technical source metadata remains intact in the API; methodology retains an external market-data reference. The top-right scope caption has been removed at the user's request.
 - Expired upstream cache may serve last successful data only with explicit stale status. Source errors, permissions, missing data and zero are distinct; there is no mock fallback.
 - Issuer sums count distinct non-wrapped products, not contracts; source-classified derivatives are excluded. Explicitly named wrapped products are excluded from issuer sums, but unresolved wraps may remain. CMC-reported stock aggregates are not relabeled as deduplicated and can differ from issuer sums.
 - Group products by underlying stock only for discovery; issuer, chain, legal wrapper, rights, pricing basis, and redemption may differ.
@@ -56,9 +57,9 @@ The cache table is part of the Drizzle schema, applied to development by the con
 ## Product
 
 - `/` preserves the project introduction and existing brand concept, linking directly to both research views.
-- `/market-map?stock=14&issuer=...&token=...` provides the requested left-to-right stock → issuer/token → market context relationship map. Lines show relationships, not measured flows.
+- `/market-map?stock=14&issuer=...&token=...` provides the requested left-to-right stock → issuer/token → market context relationship map. The stock directory opens by default. Lines show relationships, not measured flows.
 - `/issuers` and `/issuers/:issuerId` provide searchable issuer coverage, stock-product rankings and network filters. Product links return to the selected map context.
-- The user explicitly approved proceeding with existing API permissions. CMC market-pair endpoints currently return subscription HTTP 403; the UI explains the CEX/DEX detail gap and links to actual CMC token pages. No fake venues, depths or liquidity rankings.
+- The user explicitly approved proceeding with existing API permissions. CMC market-pair endpoints currently return subscription HTTP 403; the UI explains this live-data gap and links to actual CMC token pages. At the user's later request, the map also contains a separate, explicitly labeled Demo data CEX/DEX preview for the selected product. Fictional venues, sample prices, volume, spreads and depth must never be attributed to CMC, merged into real aggregates, or presented as actual listings. Issuer pages remain based on real research data.
 - The connected RWA endpoints do not return underlying stock price or equity market cap, so these show N/A with an explanation, separate from token price and tokenized cap. Company/IR/filings resources are curated for Tesla, Apple and NVIDIA, with SEC links from source CIK where provided.
 - Recheck data rights and API entitlements before public redistribution. No subscriptions are purchased by the application.
 

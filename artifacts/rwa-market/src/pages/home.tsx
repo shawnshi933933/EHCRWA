@@ -59,13 +59,13 @@ export default function Home() {
       <section className="coverage" aria-labelledby="cov-title">
         <div className="cov-head">
           <h2 id="cov-title">Current source coverage</h2>
-          <p>Counts reflect what CoinMarketCap returns today, not the whole tokenized-equity market.</p>
+          <p>Explore our research coverage, not an estimate of the entire tokenized-equity market.</p>
         </div>
         <div className="cov-stats">
           {uni.isLoading ? [0, 1, 2, 3].map(i => <div key={i} className="cov-stat"><Skel h={30} w="60%" /><Skel h={12} w="80%" /></div>) : uni.data ? (
             <>
               <div className="cov-stat"><strong className="mono" data-testid="text-count-tokenized">{count(uni.data.source.tokenizedStockCount)}</strong><span>stocks with tokenized products</span></div>
-              <div className="cov-stat"><strong className="mono" data-testid="text-count-catalog">{count(uni.data.source.catalogStockCount)}</strong><span>stocks in the CMC stock map</span></div>
+              <div className="cov-stat"><strong className="mono" data-testid="text-count-catalog">{count(uni.data.source.catalogStockCount)}</strong><span>stock profiles covered</span></div>
               <div className="cov-stat"><strong className="mono" data-testid="text-count-products">{count(uni.data.products.length)}</strong><span>distinct token products</span></div>
               <div className="cov-stat"><strong className="mono" data-testid="text-count-issuers">{count(uni.data.issuers.length)}</strong><span>issuers</span></div>
             </>

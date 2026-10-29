@@ -54,7 +54,7 @@ export default function IssuerDetail() {
       <Link href="/issuers" className="crumb" data-testid="link-crumb-issuers"><ArrowLeft aria-hidden="true" /> Issuers</Link>
       {q.isLoading ? (
         <div className="page-head"><div><Skel h={14} w={120} /><Skel h={40} w={320} /><Skel h={12} w={420} /></div></div>
-      ) : q.isError ? (
+      ) : q.isError && !d ? (
         errorStatus(q.error) === 404
           ? <StateBox kind="notfound" title="Issuer not found" action={back}>No stock issuer with ID {issuerId} exists in the source.</StateBox>
           : <StateBox kind="error" title="Could not load issuer" onRetry={() => q.refetch()} action={back}>{errorText(q.error)}</StateBox>
@@ -73,9 +73,9 @@ export default function IssuerDetail() {
               <div><dt>Products</dt><dd className="mono">{count(d.issuer.productCount)}</dd></div>
             </dl>
           </header>
-          <p className="issuer-intro">{d.issuer.name} is listed by CoinMarketCap as an issuer of products referencing {count(d.issuer.stockCount)} covered stocks. This stock-only view includes {count(networks.length)} reported networks; it excludes the issuer's non-stock products.</p>
+          <p className="issuer-intro">{d.issuer.name} offers tokenized products referencing {count(d.issuer.stockCount)} stocks in our research coverage, across {count(networks.length)} reported networks. Non-stock products are not included in these figures.</p>
           <p className="fine">Totals exclude recognised wrapped products and may have incomplete coverage. Volume is reported traded value, not depth or liquidity.{missingVolume > 0 ? ` Volume sum is partial: ${missingVolume} non-wrapped products have no reported volume.` : ''}</p>
-          <SourceBar source={d.source} onRefresh={() => q.refetch()} refreshing={q.isFetching} />
+          <SourceBar source={d.source} refreshing={q.isFetching} updateFailed={q.isError} />
           <MetaWarning text={d.metadataWarning} />
 
           <section aria-labelledby="rank-title" className="rank-section">

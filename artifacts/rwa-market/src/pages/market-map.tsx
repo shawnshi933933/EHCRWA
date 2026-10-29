@@ -10,6 +10,7 @@ import {
   type EquityProduct,
   type EquityUniverse,
 } from '@workspace/api-client-react';
+import { DemoMarkets } from '@/components/demo-markets';
 import { MarketGap, MetaWarning, Methodology, Skel, SourceBar, StateBox } from '@/components/shell';
 import { byNullLast, count, errorStatus, errorText, NA, parseNumericId, shortAddr, stamp, tokenPrice, usd, usePageMeta } from '@/lib/format';
 
@@ -65,7 +66,7 @@ export default function MarketMap() {
         <StateBox kind="notfound" title="That stock ID is not valid" action={<Link href={buildHref(DEFAULT_STOCK)} className="btn" data-testid="link-default-stock">Open Tesla (TSLA)</Link>}>
           The stock parameter "{rawStock}" is not a numeric RWA ID. Pick a stock from the directory above.
         </StateBox>
-      ) : detail.isLoading ? <MapSkeleton /> : detail.isError ? (
+      ) : detail.isLoading ? <MapSkeleton /> : detail.isError && !d ? (
         errorStatus(detail.error) === 404 ? (
           <StateBox kind="notfound" title={`No tokenized stock with ID ${stockId}`} action={<Link href={buildHref(DEFAULT_STOCK)} className="btn" data-testid="link-default-stock">Open Tesla (TSLA)</Link>}>
             The source has no stock-type RWA with this ID. We do not substitute another stock.
@@ -75,7 +76,7 @@ export default function MarketMap() {
         )
       ) : d ? (
         <>
-          <SourceBar source={d.source} onRefresh={() => { detail.refetch(); uni.refetch(); }} refreshing={detail.isFetching} label="Stock source" />
+          <SourceBar source={d.source} refreshing={detail.isFetching} updateFailed={detail.isError} />
           <MetaWarning text={d.metadataWarning} />
           <MapBoard
             detail={d}
@@ -97,7 +98,7 @@ export default function MarketMap() {
 function StockDirectory({ universe, currentId, onPick }: { universe: { data?: EquityUniverse; isLoading: boolean; isError: boolean; error: unknown; refetch: () => unknown }; currentId: number | null; onPick: (id: number) => void }) {
   const [q, setQ] = useState('');
   const [page, setPage] = useState(0);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const stocks = universe.data?.stocks;
   const filtered = useMemo(() => {
     if (!stocks) return [];
@@ -116,7 +117,7 @@ function StockDirectory({ universe, currentId, onPick }: { universe: { data?: Eq
         <div className="dir-current">
           <span className="eyebrow" id="dir-title">Stock directory</span>
           <span className="dir-cov" data-testid="text-directory-coverage">
-            {universe.data ? <>{count(universe.data.source.tokenizedStockCount)} tokenized stocks from {count(universe.data.source.catalogStockCount)} in the CMC stock map</> : universe.isLoading ? 'Loading coverage' : 'Directory unavailable'}
+            {universe.data ? <>{count(universe.data.source.tokenizedStockCount)} tokenized stocks · {count(universe.data.source.catalogStockCount)} stock profiles covered</> : universe.isLoading ? 'Loading coverage' : 'Directory unavailable'}
           </span>
         </div>
         <label className="search-field" htmlFor="stock-search">
@@ -132,14 +133,14 @@ function StockDirectory({ universe, currentId, onPick }: { universe: { data?: Eq
       {open && (
         <div id="dir-list" className="dir-panel">
           {universe.isLoading ? <div className="dir-grid">{Array.from({ length: 6 }, (_, i) => <div key={i} className="dir-item"><Skel w="40%" /><Skel h={11} w="70%" /></div>)}</div>
-            : universe.isError ? <StateBox kind="error" title="Directory could not load" onRetry={() => universe.refetch()}>{errorText(universe.error)}</StateBox>
+            : universe.isError && !universe.data ? <StateBox kind="error" title="Directory could not load" onRetry={() => universe.refetch()}>{errorText(universe.error)}</StateBox>
             : filtered.length === 0 ? <StateBox kind="empty" title="No stock matches that search">Only stocks with at least one tokenized product in the source are listed. Try a ticker such as AAPL or a company name.</StateBox>
             : (
               <>
                 <ul className="dir-grid" aria-label="Stocks, sorted by tokenized market cap, N/A last">
                   {rows.map(s => (
                     <li key={s.id}>
-                      <button type="button" className={`dir-item ${s.id === currentId ? 'on' : ''}`} aria-pressed={s.id === currentId} onClick={() => { onPick(s.id); setOpen(false); setQ(''); }} data-testid={`button-stock-${s.id}`}>
+                      <button type="button" className={`dir-item ${s.id === currentId ? 'on' : ''}`} aria-pressed={s.id === currentId} onClick={() => { onPick(s.id); setQ(''); }} data-testid={`button-stock-${s.id}`}>
                         <span className="di-top"><b className="mono">{s.symbol}</b><em className="mono">{usd(s.tokenizedMarketCapUsd)}</em></span>
                         <span className="di-name">{s.name}</span>
                         <span className="di-meta">{s.productCount} products · {s.issuerCount} issuers</span>
@@ -271,9 +272,9 @@ function MapBoard({ detail, issuerNames, issuerParam, tokenParam, tokenInvalid, 
               <Metric label="Stock price" value={usd(profile.stockPriceUsd, false)} na={profile.stockPriceUsd === null} id="stock-price" />
               <Metric label="Equity market cap" value={usd(profile.equityMarketCapUsd)} na={profile.equityMarketCapUsd === null} id="equity-cap" />
             </div>
-            {(profile.stockPriceUsd === null || profile.equityMarketCapUsd === null) && <p className="fine">The connected RWA API does not provide underlying share price or equity market cap. Do not compare token prices to a share price shown elsewhere without checking the issuer's ratio.</p>}
+            {(profile.stockPriceUsd === null || profile.equityMarketCapUsd === null) && <p className="fine">Underlying stock price and equity market cap are currently unavailable. Token prices may differ from share prices because issuer ratios vary.</p>}
             <div className="rwa-totals">
-              <span className="eyebrow">Tokenized RWA totals · CMC reported</span>
+              <span className="eyebrow">Tokenized RWA totals</span>
               <div className="metric-grid">
                 <Metric label="Tokenized market cap" value={usd(stock.tokenizedMarketCapUsd)} na={stock.tokenizedMarketCapUsd === null} id="tokenized-cap" big />
                 <Metric label="Tokenized 24h volume" value={usd(stock.tokenizedVolume24hUsd)} na={stock.tokenizedVolume24hUsd === null} id="tokenized-vol" />
@@ -294,7 +295,7 @@ function MapBoard({ detail, issuerNames, issuerParam, tokenParam, tokenInvalid, 
         {/* CENTER: issuers */}
         <section className="col col-issuers" aria-labelledby="col2">
           <div className="col-label"><span className="mono">02</span><h2 id="col2">Issuers & tokens</h2><span className="col-count mono">{groups.length} issuers · {products.length} products</span></div>
-          {groups.length === 0 ? <StateBox kind="empty" title="No eligible token products">CMC lists this stock as tokenized, but every product it returned is classified as a derivative and is excluded here. Nothing is substituted.</StateBox> : (
+          {groups.length === 0 ? <StateBox kind="empty" title="No eligible token products">No eligible stock-token products are available for this stock. Derivatives are excluded and no alternative stock is substituted.</StateBox> : (
             <div className="groups">
               {groups.map(g => {
                 const isOpen = expanded[g.issuerId] || g.products.slice(1).some(p => p.id === selected?.id);
@@ -339,7 +340,11 @@ function MapBoard({ detail, issuerNames, issuerParam, tokenParam, tokenInvalid, 
           <div className="market-card" ref={marketRef} data-testid="panel-selected-product">
             {selected ? <SelectedProduct p={selected} issuerName={groups.find(g => g.issuerId === selected!.issuerId)?.name ?? selected.issuerId} />
               : <p className="muted pad">Select a product in column 02 to see its contracts and market-data status.</p>}
-            <MarketGap access={detail.marketAccess} tokenSourceUrl={selected?.sourceUrl} />
+            {selected && <DemoMarkets key={selected.id} product={selected} />}
+            <details className="gap-fold" open={!selected} data-testid="panel-market-gap-fold">
+              <summary>Live market coverage <span>Detailed venue information is not available yet</span></summary>
+              <MarketGap access={detail.marketAccess} tokenSourceUrl={selected?.sourceUrl} />
+            </details>
           </div>
         </section>
       </div>
@@ -352,7 +357,7 @@ function SelectedProduct({ p, issuerName }: { p: EquityProduct; issuerName: stri
     <div className="sel-prod" key={p.id}>
       <span className="eyebrow">Selected product</span>
       <h3 data-testid="text-selected-product"><span className="mono">{p.symbol}</span> {p.name}</h3>
-      <p className="muted">{issuerName}{p.isWrapped ? ' · Wrapped version' : ''} · CMC ID <span className="mono">{p.id}</span></p>
+      <p className="muted">{issuerName}{p.isWrapped ? ' · Wrapped version' : ''} · Product ID <span className="mono">{p.id}</span></p>
       <div className="metric-grid">
         <Metric label="Token price" value={tokenPrice(p.priceUsd)} na={p.priceUsd === null} id="sel-price" />
         <Metric label="Market cap" value={usd(p.marketCapUsd)} na={p.marketCapUsd === null} id="sel-cap" />

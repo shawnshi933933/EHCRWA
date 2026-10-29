@@ -29,7 +29,7 @@ export default function Issuers() {
           <p>Each issuer wraps stocks differently. Totals below count stock products only and exclude recognised wrapped versions.</p>
         </div>
       </header>
-      {uni.data && <SourceBar source={uni.data.source} onRefresh={() => uni.refetch()} refreshing={uni.isFetching} />}
+      {uni.data && <SourceBar source={uni.data.source} refreshing={uni.isFetching} updateFailed={uni.isError} />}
       <div className="toolbar">
         <label className="search-field" htmlFor="issuer-search">
           <Search aria-hidden="true" /><span className="sr-only">Search issuers</span>
@@ -42,7 +42,7 @@ export default function Issuers() {
         </div>
       </div>
       {uni.isLoading ? <div className="issuer-list">{Array.from({ length: 6 }, (_, i) => <div key={i} className="issuer-row"><Skel w="30%" h={18} /><Skel w="60%" h={12} /></div>)}</div>
-        : uni.isError ? <StateBox kind="error" title="Issuer directory could not load" onRetry={() => uni.refetch()}>{errorText(uni.error)}</StateBox>
+        : uni.isError && !uni.data ? <StateBox kind="error" title="Issuer directory could not load" onRetry={() => uni.refetch()}>{errorText(uni.error)}</StateBox>
         : list.length === 0 ? <StateBox kind="empty" title="No issuer matches that search">Try a shorter name.</StateBox>
         : (
           <ol className="issuer-list" aria-label={`Issuers ranked by ${sort === 'cap' ? 'market cap' : sort === 'volume' ? '24h volume' : 'product count'}, N/A last`}>

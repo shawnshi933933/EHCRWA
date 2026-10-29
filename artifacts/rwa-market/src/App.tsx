@@ -10,9 +10,17 @@ import MarketMap from '@/pages/market-map';
 import Issuers from '@/pages/issuers';
 import IssuerDetail from '@/pages/issuer-detail';
 import NotFound from '@/pages/not-found';
+import { marketRefreshDelay } from '@/lib/market-updates';
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 15 * 60 * 1000, refetchOnWindowFocus: false, retry: 1 } },
+  defaultOptions: { queries: {
+    staleTime: 15 * 60 * 1000,
+    refetchInterval: query => marketRefreshDelay(query.state.data),
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
+    retry: 1,
+  } },
 });
 
 function Router() {
