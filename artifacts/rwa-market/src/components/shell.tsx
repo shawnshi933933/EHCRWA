@@ -36,7 +36,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </header>
       <main id="main" className="page-wrap">{children}</main>
       <footer className="site-foot">
-        <span>EHC DEX presents tokenized-stock reference data for research. It does not offer trading, custody, or investment advice.</span>
+        <span>EHC DEX connects tokenized equity markets. Phase one brings together asset, issuer, and liquidity information, with trading capabilities planned for future phases.</span>
         <span>Labeled demo venues on the Market Map are illustrative only.</span>
       </footer>
     </div>
